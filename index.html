@@ -65,7 +65,7 @@
 
         .intro {
             color: #4a4a4a;
-            font-size: 1.2rem;
+            font极-size: 1.2rem;
             max-width: 700px;
             margin: 0 auto 20px;
             line-height: 1.6;
@@ -162,7 +162,7 @@
             background: #f7fff7;
             border-radius: 15px;
             padding: 20px;
-            margin: 20px 0;
+            margin: 20px 极0;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
         }
 
@@ -374,7 +374,7 @@
                     <div class="stat-label">总题数</div>
                 </div>
                 <div class="stat-item">
-                    <div class="极stat-value" id="correctCount">0</div>
+                    <div class="stat-value" id="correctCount">0</div>
                     <div class="stat-label">正确数</div>
                 </div>
                 <div class="stat-item">
@@ -425,7 +425,6 @@
                 options: [],
                 currentQuestionIndex: 0,
                 isAnswering: false, // 防止连续点击
-                originalQuestions: [], // 保存原始题目集合
                 isPracticingWrongQuestions: false // 标记是否在练习错题
             };
             
@@ -451,14 +450,14 @@
                 clearWrongBtn: document.getElementById('clearWrongBtn')
             };
             
-            // 生成随机整数函数 [7,9](@ref)
+            // 生成随机整数函数 
             function getRandomInt(min, max) {
                 min = Math.ceil(min);
                 max = Math.floor(max);
                 return Math.floor(Math.random() * (max - min + 1)) + min;
             }
             
-            // 生成随机题目函数 [1,7](@ref)
+            // 生成随机题目函数 
             function generateRandomQuestion() {
                 const operationTypes = ['+', '-'];
                 const operation = operationTypes[getRandomInt(0, 1)];
@@ -483,15 +482,6 @@
                 };
             }
             
-            // 生成题目集合
-            function generateQuestionSet(size) {
-                const questions = [];
-                for (let i = 0; i < size; i++) {
-                    questions.push(generateRandomQuestion());
-                }
-                return questions;
-            }
-            
             // 初始化游戏
             function initGame() {
                 gameState.totalCount = 0;
@@ -502,47 +492,13 @@
                 gameState.isAnswering = false;
                 gameState.isPracticingWrongQuestions = false;
                 
-                // 生成新的随机题目集合（20题）[1,7](@ref)
-                gameState.originalQuestions = generateQuestionSet(20);
-                
-                updateStats();
-                showQuestion(gameState.currentQuestionIndex);
+                // 显示第一题
+                showRandomQuestion();
             }
             
-            // 显示题目
-            function showQuestion(index) {
-                if (gameState.isPracticingWrongQuestions) {
-                    // 练习错题模式
-                    if (index >= gameState.wrongQuestions.length) {
-                        // 所有错题已完成
-                        if (gameState.wrongQuestions.length === 0) {
-                            // 没有错题了，返回普通模式
-                            alert("恭喜！您已经完成了所有错题练习！");
-                            hideWrongQuestions();
-                            return;
-                        }
-                        // 循环回第一题
-                        gameState.currentQuestionIndex = 0;
-                    } else {
-                        gameState.current极QuestionIndex = index;
-                    }
-                    
-                    const wrongQuestion = gameState.wrongQuestions[gameState.currentQuestionIndex];
-                    gameState.currentQuestion = {
-                        expression: wrongQuestion.question,
-                        answer: wrongQuestion.correctAnswer
-                    };
-                } else {
-                    // 普通练习模式
-                    if (index >= gameState.originalQuestions.length) {
-                        // 所有题目已完成，循环回第一题
-                        gameState.currentQuestionIndex = 0;
-                    } else {
-                        gameState.currentQuestionIndex = index;
-                    }
-                    
-                    gameState.currentQuestion = gameState.originalQuestions[gameState.currentQuestionIndex];
-                }
+            // 显示随机题目
+            function showRandomQuestion() {
+                gameState.currentQuestion = generateRandomQuestion();
                 
                 // 显示题目
                 elements.question.textContent = `${gameState.currentQuestion.expression} = ?`;
@@ -568,7 +524,7 @@
             function generateOptions(correctAnswer) {
                 gameState.options = [correctAnswer];
                 
-                // 添加干扰项 [4,7](@ref)
+                // 添加干扰项
                 while (gameState.options.length < 4) {
                     // 生成与正确答案接近的干扰项（±1或±2）
                     const offset = Math.floor(Math.random() * 3) + 1; // 1-3
@@ -582,7 +538,7 @@
                     }
                 }
                 
-                // 随机排序选项 [2](@ref)
+                // 随机排序选项
                 shuffleArray(gameState.options);
                 
                 // 更新按钮文本
@@ -591,7 +547,7 @@
                 });
             }
             
-            // 数组随机排序 [2](@ref)
+            // 数组随机排序
             function shuffleArray(array) {
                 for (let i = array.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
@@ -638,7 +594,11 @@
                     
                     // 答对后1.5秒自动下一题
                     setTimeout(() => {
-                        showQuestion(gameState.currentQuestionIndex + 1);
+                        if (gameState.isPracticingWrongQuestions) {
+                            showQuestion(gameState.currentQuestionIndex + 1);
+                        } else {
+                            showRandomQuestion();
+                        }
                         gameState.isAnswering = false;
                     }, 1500);
                 } else {
@@ -689,15 +649,17 @@
             // 播放音效
             function playSound(type) {
                 try {
-                    if (type === 'correct') {
-                        correctSound.currentTime = 0; // 重置播放位置
-                        correctSound.play();
-                    } else if (type === 'wrong') {
-                        wrongSound.currentTime = 0; // 重置播放位置
-                        wrongSound.play();
-                    }
+                    const sound = type === 'correct' ? correctSound : wrongSound;
+                    sound.currentTime = 0; // 重置播放位置
+                    sound.play().catch(e => {
+                        console.error(`${type}音效播放失败，尝试重新加载: `, e);
+                        sound.load(); // 重新加载音频
+                        sound.play().catch(e2 => {
+                            console.error('重新加载和播放失败: ', e2);
+                        });
+                    });
                 } catch (e) {
-                    console.log('音效播放失败:', e);
+                    console.error('音效播放错误: ', e);
                 }
             }
             
@@ -818,6 +780,38 @@
                 hideWrongQuestions();
             }
             
+            // 显示指定错题
+            function showQuestion(index) {
+                if (index >= gameState.wrongQuestions.length) {
+                    // 所有错题已完成
+                    if (gameState.wrongQuestions.length === 0) {
+                        // 没有错题了，返回普通模式
+                        alert("恭喜！您已经完成了所有错题练习！");
+                        hideWrongQuestions();
+                        return;
+                    }
+                    // 循环回第一题
+                    gameState.currentQuestionIndex = 0;
+                } else {
+                    gameState.currentQuestionIndex = index;
+                }
+                
+                const wrongQuestion = gameState.wrongQuestions[gameState.currentQuestionIndex];
+                gameState.currentQuestion = {
+                    expression: wrongQuestion.question,
+                    answer: wrongQuestion.correctAnswer
+                };
+                
+                // 显示题目
+                elements.question.textContent = `${gameState.currentQuestion.expression} = ?`;
+                
+                // 生成选项
+                generateOptions(gameState.currentQuestion.answer);
+                
+                // 重置按钮状态
+                resetOptionButtons();
+            }
+            
             // 清空错题本
             function clearWrongQuestions() {
                 if (gameState.wrongQuestions.length === 0) {
@@ -840,7 +834,11 @@
             
             elements.nextBtn.addEventListener('click', () => {
                 // 切换到下一题
-                showQuestion(gameState.currentQuestionIndex + 1);
+                if (gameState.isPracticingWrongQuestions) {
+                    showQuestion(gameState.currentQuestionIndex + 1);
+                } else {
+                    showRandomQuestion();
+                }
             });
             
             elements.restartBtn.addEventListener('click', initGame);
@@ -860,7 +858,11 @@
                 
                 // N键切换到下一题
                 if (e.key === 'n' || e.key === 'N') {
-                    showQuestion(gameState.currentQuestionIndex + 1);
+                    if (gameState.isPracticingWrongQuestions) {
+                        showQuestion(gameState.currentQuestionIndex + 1);
+                    } else {
+                        showRandomQuestion();
+                    }
                 }
             });
             
