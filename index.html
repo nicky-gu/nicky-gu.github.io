@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>儿童数学乐园 - 10以内加减法练习</title>
+    <title>儿童数学乐园 - 10/20以内加减法练习</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap">
     <style>
         * {
@@ -58,17 +58,43 @@
         h1 {
             color: #ff6b6b;
             font-size: 2.8rem;
-            text-shadow: 3px 3px 0 #ffe66d;
+            text-shadow: 3px 3px 极0 #ffe66d;
             margin-bottom: 15px;
             letter-spacing: 2px;
         }
 
         .intro {
             color: #4a4a4a;
-            font极-size: 1.2rem;
+            font-size: 1.2rem;
             max-width: 700px;
             margin: 0 auto 20px;
             line-height: 1.6;
+        }
+
+        .mode-selection {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            background: #ff9e6d;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 40px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 0 #d17d4a;
+        }
+
+        .mode-btn:hover {
+            background: #ff6b6b;
+            transform: scale(1.05);
         }
 
         .game-area {
@@ -162,7 +188,7 @@
             background: #f7fff7;
             border-radius: 15px;
             padding: 20px;
-            margin: 20px 极0;
+            margin: 20px 0;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
         }
 
@@ -263,12 +289,12 @@
         }
 
         .correct {
-            color: #4cd137; /* 修改为更鲜艳的绿色 */
+            color: #4cd137;
             text-shadow: 0 0 10px rgba(76, 209, 55, 0.5);
         }
 
         .incorrect {
-            color: #ff6b6b;
+            color: #ff6b极6b;
             text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
         }
 
@@ -326,12 +352,12 @@
                 grid-template-columns: repeat(2, 1fr);
             }
             
-            .controls {
+            .controls, .mode-selection {
                 flex-direction: column;
                 align-items: center;
             }
             
-            .control-btn {
+            .control-btn, .mode-btn {
                 width: 100%;
                 margin-bottom: 10px;
             }
@@ -347,17 +373,23 @@
     <div class="container">
         <header>
             <h1>儿童数学乐园</h1>
-            <p class="intro">欢迎来到数学魔法世界！和小动物们一起学习10以内加减法，通过有趣的游戏提高你的计算能力！</p>
+            <p class="intro">欢迎来到数学魔法世界！和小动物们一起学习加减法，通过有趣的游戏提高你的计算能力！</p>
         </header>
         
+        <!-- 模式选择区域 -->
+        <div class="mode-selection">
+            <button class="mode-btn" id="start10Btn">10以内加减法</button>
+            <button class="mode-btn" id="start20Btn">20以内加减法</button>
+        </div>
+        
         <div class="game-area">
-            <div class="question-container" id="question">3 + 4 = ?</div>
+            <div class="question-container" id="question">请选择练习模式</div>
             
             <div class="options-container">
-                <button class="option-btn" data-value="0">7</button>
-                <button class="option-btn" data-value="1">5</button>
-                <button class="option-btn" data-value="2">8</button>
-                <button class="option-btn" data-value="3">6</button>
+                <button class="option-btn" data-value="0">?</button>
+                <button class="option-btn" data-value="1">?</button>
+                <button class="option-btn" data-value="2">?</button>
+                <button class="option-btn" data-value="3">?</button>
             </div>
             
             <div class="controls">
@@ -424,8 +456,10 @@
                 wrongQuestions: [],
                 options: [],
                 currentQuestionIndex: 0,
-                isAnswering: false, // 防止连续点击
-                isPracticingWrongQuestions: false // 标记是否在练习错题
+                isAnswering: false,
+                isPracticingWrongQuestions: false,
+                maxRange: 0, // 当前最大数值范围
+                wrongQuestionsPracticeSet: [] // 专门用于练习的错题副本
             };
             
             // 音频元素
@@ -447,7 +481,9 @@
                 wrongQuestions: document.getElementById('wrongQuestions'),
                 wrongList: document.getElementById('wrongList'),
                 practiceWrongBtn: document.getElementById('practiceWrongBtn'),
-                clearWrongBtn: document.getElementById('clearWrongBtn')
+                clearWrongBtn: document.getElementById('clearWrongBtn'),
+                start10Btn: document.getElementById('start10Btn'),
+                start20Btn: document.getElementById('start20Btn')
             };
             
             // 生成随机整数函数 
@@ -465,13 +501,13 @@
                 let num1, num2, answer;
                 
                 if (operation === '+') {
-                    // 加法：确保结果不超过10
-                    num1 = getRandomInt(0, 10);
-                    num2 = getRandomInt(0, 10 - num1);
+                    // 加法：确保结果不超过当前范围
+                    num1 = getRandomInt(0, gameState.maxRange);
+                    num2 = getRandomInt(0, gameState.maxRange - num1);
                     answer = num1 + num2;
                 } else {
                     // 减法：确保结果不为负数
-                    num1 = getRandomInt(0, 10);
+                    num1 = getRandomInt(0, gameState.maxRange);
                     num2 = getRandomInt(0, num1);
                     answer = num1 - num2;
                 }
@@ -491,8 +527,9 @@
                 gameState.currentQuestionIndex = 0;
                 gameState.isAnswering = false;
                 gameState.isPracticingWrongQuestions = false;
+                gameState.wrongQuestionsPracticeSet = [];
                 
-                // 显示第一题
+                updateStats();
                 showRandomQuestion();
             }
             
@@ -531,8 +568,8 @@
                     const sign = Math.random() > 0.5 ? 1 : -1;
                     const option = correctAnswer + (sign * offset);
                     
-                    // 确保选项在0-10之间且不重复
-                    if (option >= 0 && option <= 10 && 
+                    // 确保选项在0到最大范围内之间且不重复
+                    if (option >= 0 && option <= gameState.maxRange && 
                         !gameState.options.includes(option)) {
                         gameState.options.push(option);
                     }
@@ -547,7 +584,7 @@
                 });
             }
             
-            // 数组随机排序
+            // 数组随机排序 (Fisher-Yates算法)
             function shuffleArray(array) {
                 for (let i = array.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
@@ -572,13 +609,16 @@
                     
                     // 如果是在练习错题模式，答对后从错题本中移除该题
                     if (gameState.isPracticingWrongQuestions) {
-                        const currentQuestion = gameState.wrongQuestions[gameState.currentQuestionIndex];
+                        const currentQuestion = gameState.wrongQuestionsPracticeSet[gameState.currentQuestionIndex];
                         
-                        // 从错题本中移除
+                        // 从主错题本中移除
                         gameState.wrongQuestions = gameState.wrongQuestions.filter(q => 
                             q.question !== currentQuestion.question || 
                             q.userAnswer !== currentQuestion.userAnswer
                         );
+                        
+                        // 从练习副本中移除
+                        gameState.wrongQuestionsPracticeSet.splice(gameState.currentQuestionIndex, 1);
                         
                         // 更新错题列表显示
                         showWrongQuestions();
@@ -595,8 +635,17 @@
                     // 答对后1.5秒自动下一题
                     setTimeout(() => {
                         if (gameState.isPracticingWrongQuestions) {
-                            showQuestion(gameState.currentQuestionIndex + 1);
+                            // 练习错题模式
+                            if (gameState.wrongQuestionsPracticeSet.length > 0) {
+                                // 如果还有错题，继续显示下一题
+                                showQuestion(gameState.currentQuestionIndex + 1);
+                            } else {
+                                // 所有错题已完成
+                                alert("恭喜！您已经完成了所有错题练习！");
+                                hideWrongQuestions();
+                            }
                         } else {
+                            // 普通模式
                             showRandomQuestion();
                         }
                         gameState.isAnswering = false;
@@ -607,21 +656,23 @@
                     // 播放错误音效
                     playSound('wrong');
                     
-                    // 记录错题
-                    const wrongQuestion = {
-                        question: gameState.currentQuestion.expression,
-                        userAnswer: parseInt(selectedOption),
-                        correctAnswer: gameState.currentQuestion.answer
-                    };
-                    
-                    // 检查是否已存在相同的错题
-                    const isDuplicate = gameState.wrongQuestions.some(q => 
-                        q.question === wrongQuestion.question && 
-                        q.userAnswer === wrongQuestion.userAnswer
-                    );
-                    
-                    if (!isDuplicate) {
-                        gameState.wrongQuestions.push(wrongQuestion);
+                    // 记录错题（仅限普通模式）
+                    if (!gameState.isPracticingWrongQuestions) {
+                        const wrongQuestion = {
+                            question: gameState.currentQuestion.expression,
+                            userAnswer: parseInt(selectedOption),
+                            correctAnswer: gameState.currentQuestion.answer
+                        };
+                        
+                        // 检查是否已存在相同的错题
+                        const isDuplicate = gameState.wrongQuestions.some(q => 
+                            q.question === wrongQuestion.question && 
+                            q.userAnswer === wrongQuestion.userAnswer
+                        );
+                        
+                        if (!isDuplicate) {
+                            gameState.wrongQuestions.push(wrongQuestion);
+                        }
                     }
                     
                     // 答错后允许继续尝试
@@ -757,7 +808,7 @@
                 gameState.isPracticingWrongQuestions = false;
             }
             
-            // 练习所有错题
+            // 练习所有错题（修复版）
             function practiceAllWrongQuestions() {
                 if (gameState.wrongQuestions.length === 0) {
                     alert('当前没有错题，快去练习吧！');
@@ -773,6 +824,9 @@
                 gameState.wrongCount = 0;
                 updateStats();
                 
+                // 创建错题副本用于练习（避免在练习中修改原始错题本）
+                gameState.wrongQuestionsPracticeSet = [...gameState.wrongQuestions];
+                
                 // 显示第一题
                 showQuestion(0);
                 
@@ -780,27 +834,34 @@
                 hideWrongQuestions();
             }
             
-            // 显示指定错题
+            // 显示指定错题（修复版）
             function showQuestion(index) {
-                if (index >= gameState.wrongQuestions.length) {
-                    // 所有错题已完成
-                    if (gameState.wrongQuestions.length === 0) {
-                        // 没有错题了，返回普通模式
-                        alert("恭喜！您已经完成了所有错题练习！");
-                        hideWrongQuestions();
-                        return;
+                if (gameState.isPracticingWrongQuestions) {
+                    // 练习错题模式
+                    if (index >= gameState.wrongQuestionsPracticeSet.length) {
+                        // 所有错题已完成
+                        if (gameState.wrongQuestionsPracticeSet.length === 0) {
+                            // 没有错题了，返回普通模式
+                            alert("恭喜！您已经完成了所有错题练习！");
+                            hideWrongQuestions();
+                            return;
+                        }
+                        // 循环回第一题
+                        gameState.currentQuestionIndex = 0;
+                    } else {
+                        gameState.currentQuestionIndex = index;
                     }
-                    // 循环回第一题
-                    gameState.currentQuestionIndex = 0;
+                    
+                    const wrongQuestion = gameState.wrongQuestionsPracticeSet[gameState.currentQuestionIndex];
+                    gameState.currentQuestion = {
+                        expression: wrongQuestion.question,
+                        answer: wrongQuestion.correctAnswer
+                    };
                 } else {
+                    // 普通练习模式
                     gameState.currentQuestionIndex = index;
+                    gameState.currentQuestion = generateRandomQuestion();
                 }
-                
-                const wrongQuestion = gameState.wrongQuestions[gameState.currentQuestionIndex];
-                gameState.currentQuestion = {
-                    expression: wrongQuestion.question,
-                    answer: wrongQuestion.correctAnswer
-                };
                 
                 // 显示题目
                 elements.question.textContent = `${gameState.currentQuestion.expression} = ?`;
@@ -841,11 +902,33 @@
                 }
             });
             
-            elements.restartBtn.addEventListener('click', initGame);
+            elements.restartBtn.addEventListener('click', () => {
+                if (gameState.maxRange > 0) {
+                    initGame();
+                } else {
+                    alert('请先选择练习模式！');
+                }
+            });
+            
             elements.showWrongBtn.addEventListener('click', showWrongQuestions);
             elements.hideWrongBtn.addEventListener('click', hideWrongQuestions);
             elements.practiceWrongBtn.addEventListener('click', practiceAllWrongQuestions);
             elements.clearWrongBtn.addEventListener('click', clearWrongQuestions);
+            
+            // 模式选择按钮
+            elements.start10Btn.addEventListener('click', () => {
+                gameState.maxRange = 10;
+                initGame();
+                elements.question.textContent = "正在准备10以内加减法...";
+                setTimeout(() => showRandomQuestion(), 500);
+            });
+            
+            elements.start20Btn.addEventListener('click', () => {
+                gameState.maxRange = 20;
+                initGame();
+                elements.question.textContent = "正在准备20以内加减法...";
+                setTimeout(() => showRandomQuestion(), 500);
+            });
             
             // 键盘事件支持（1-4选择答案）
             document.addEventListener('keydown', (e) => {
@@ -865,9 +948,6 @@
                     }
                 }
             });
-            
-            // 启动游戏
-            initGame();
         });
     </script>
 </body>
